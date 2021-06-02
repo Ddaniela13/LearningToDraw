@@ -108,6 +108,9 @@ parameters with the "sender" agent. Alternatively it can be initialised with pre
 - STL-10 
 - Caltech101 (training data is balanced by supersampling with augmentation)
 
+[//]: #
     arguments: 
     --dataset {CIFAR10,CelebA,MNIST,STL10,TinyImageNet,Caltech101}  
+
+
 
