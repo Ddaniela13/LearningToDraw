@@ -1,0 +1,6 @@
+DifferentiableSketching>=0.0.1
+
+torch~=1.7.0
+setuptools~=50.3.1
+torchbearer~=0.5.3.dev0
+torchvision~=0.8.1
