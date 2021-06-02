@@ -107,6 +107,8 @@ parameters with the "sender" agent. Alternatively it can be initialised with pre
 - CelebA (`--image-size` to control size; default 64px)
 - STL-10 
 - Caltech101 (training data is balanced by supersampling with augmentation)
+
+
 [//]: #
 
     arguments: 
