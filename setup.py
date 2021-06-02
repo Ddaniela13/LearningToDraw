@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='LearningToDraw',
     version='',
-    packages=['model'],
+    packages=['model', 'utils', 'tests'],
     url='https://github.com/Ddaniela13/LearningToDraw',
     license='BSD 3-Clause',
     author='Daniela Mihai and Jonathon Hare',
