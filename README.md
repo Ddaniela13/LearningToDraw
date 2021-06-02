@@ -101,9 +101,9 @@ The backbone can optionally be initialised with pretrained weight and also optio
     [--separate_encoders]
 
 
-### Reciever
+### Receiver
 
-The "reciever" consists of a backbone CNN which is used to convert visual inputs (both the images in the pool and the 
+The "receiver" consists of a backbone CNN which is used to convert visual inputs (both the images in the pool and the 
 sketch) into a latent vector which is then transformed into a different latent representation by an MLP. These projected 
 latent vectors are used for prediction and in the loss as described below. 
 
