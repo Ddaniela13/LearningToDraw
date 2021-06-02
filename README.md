@@ -10,7 +10,7 @@ This is the __official__ code for the paper ["Learning to Draw: Emergent Communi
   <a href="">Papers With Code</a> •
   <a href="#getting-started">Getting Started</a> •
   <a href="#game-setups">Game setups</a> •
-  <a href="#model-setup">Model setup</a> 
+  <a href="#model-setup">Model setup</a> •
   <a href="#datasets">Datasets</a> 
 </p>
 
