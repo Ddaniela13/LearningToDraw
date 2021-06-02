@@ -1,6 +1,23 @@
+<div align="center">
+  
 # Learning to Draw: Emergent Communication through Sketching
 
-This is the official code for the paper "Learning to Draw: Emergent Communication through Sketching". The paper demonstrates that it is possible to for a communication channel based on line drawing to emerge between agents. Furthermore we show that with a simple additional self-supervised loss that the drawings the agent produces are interpretable by humans.
+This is the __official__ code for the paper ["Learning to Draw: Emergent Communication through Sketching"](). The paper demonstrates that it is possible to for a communication channel based on line drawing to emerge between agents. Furthermore we show that with a simple additional self-supervised loss that the drawings the agent produces are interpretable by humans.
+
+
+<p align="center">
+  <a href="">ArXiv</a> •
+  <a href="">Papers With Code</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#game-setups">Game setups</a> •
+  <a href="#model-setup">Model setup</a> 
+  <a href="#datasets">Datasets</a> 
+</p>
+
+<img src="model.svg"/>
+</a>
+
+</div>
 
 
 ## Getting started
@@ -116,3 +133,8 @@ Datasets will be downloaded to the dataset root directory (default `./data`) as 
 
 
 
+## Citation
+
+If you find this repository useful for your research, please use the following.
+
+    TODO
