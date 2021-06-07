@@ -7,7 +7,7 @@ This is the __official__ code for the paper ["Learning to Draw: Emergent Communi
 
 <p align="center">
   <a href="https://arxiv.org/abs/2106.02067">ArXiv</a> •
-  <a href="">Papers With Code</a> •
+  <a href="https://paperswithcode.com/paper/learning-to-draw-emergent-communication">Papers With Code</a> •
   <a href="#getting-started">Getting Started</a> •
   <a href="#game-setups">Game setups</a> •
   <a href="#model-setup">Model setup</a> •
