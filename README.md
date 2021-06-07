@@ -137,4 +137,12 @@ Datasets will be downloaded to the dataset root directory (default `./data`) as 
 
 If you find this repository useful for your research, please use the following.
 
-    TODO
+    @misc{mihai2021learning,
+      title={Learning to Draw: Emergent Communication through Sketching}, 
+      author={Daniela Mihai and Jonathon Hare},
+      year={2021},
+      eprint={2106.02067},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+    }
+
