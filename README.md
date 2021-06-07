@@ -2,8 +2,7 @@
   
 # Learning to Draw: Emergent Communication through Sketching
 
-This is the __official__ code for the paper ["Learning to Draw: Emergent Communication through Sketching"](https://arxiv.org/abs/2106.02067). The paper demonstrates that it is possible to for a communication channel based on line drawing to emerge between agents. Furthermore we show that with a simple additional self-supervised loss that the drawings the agent produces are interpretable by humans.
-
+This is the __official__ code for the paper ["Learning to Draw: Emergent Communication through Sketching"](https://arxiv.org/abs/2106.02067).
 
 <p align="center">
   <a href="https://arxiv.org/abs/2106.02067">ArXiv</a> •
@@ -19,6 +18,9 @@ This is the __official__ code for the paper ["Learning to Draw: Emergent Communi
 
 </div>
 
+## About
+
+We demonstrate that it is possible for a communication channel based on line drawing to emerge between agents playing a visual referential communication game. Furthermore we show that with a simple additional self-supervised loss that the drawings the agent produces are interpretable by humans.
 
 ## Getting started
 
