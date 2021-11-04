@@ -2,6 +2,7 @@ import argparse
 import pathlib
 from itertools import chain
 
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 
@@ -9,14 +10,15 @@ import torchbearer as tb
 import torchbearer.metrics as metrics
 from dsketch.experiments.characters.models import Encoder, Decoder
 from dsketch.experiments.shared.utils import img_to_file, get_subparser, save_args, save_model_info, \
-    FakeArgumentParser, autoenc_loader, parse_learning_rate_arg
+    FakeArgumentParser, parse_learning_rate_arg
 from model import SketchingGame, get_model, model_choices, SKETCHES, SENDER_IMAGES, RECEIVER_IMAGES, \
     RECEIVER_IMAGES_MATCHED
 from model.agents import _RxBase
 from torchbearer.callbacks import Interval, CSVLogger, imaging, add_to_loss, on_end_epoch
-from utils.game_data import build_game_loader, build_dataloaders, pair_images
+from utils.game_data import build_game_loader, build_dataloaders, pair_images, pair_images_tranform_sender
+from utils.game_logging import GameLogger
 from utils.game_loss import loss_choices, get_loss as get_loss, build_loss, reconstruct_loss, \
-    LearnableWeightedPerceptualLoss, make_perceptual_loss
+    LearnableWeightedPerceptualLoss, make_perceptual_loss, make_CLIP_loss, make_dog_perceptual_loss
 from utils.shared_datasets import dataset_choices, get_dataset, IMAGENET_NORM_INV
 
 
@@ -78,6 +80,9 @@ def evaluate(args):
     
 
 def build_trial(args):
+    torch.manual_seed(args.data_seed)
+    np.random.seed(args.data_seed)
+    
     model = build_model(args)
     loss = build_loss(args)
 
@@ -131,7 +136,13 @@ def build_trial(args):
             callbacks.append(lpl)
             callbacks.append(print_weights)
         else:
-            callbacks.append(make_perceptual_loss(args.sop_weights))
+            callbacks.append(make_perceptual_loss(args.sop_weights, args.sop_coef))
+
+    if args.like_a_dog_loss:
+        callbacks.append(make_dog_perceptual_loss(args.sop_weights, args.sop_coef, args.like_a_dog_image))
+
+    if args.CLIP_loss:
+        callbacks.append(make_CLIP_loss(args))
 
     trial = tb.Trial(model, optimizer=optim, criterion=loss, metrics=['loss', build_commrate_metric(args), 'lr'],
                      callbacks=callbacks)
@@ -142,6 +153,7 @@ def build_trial(args):
 
 def build_test_trial(args):
     model = build_model(args).to(args.device)
+    loss = build_loss(args)
     inv = get_dataset(args.dataset).inv_transform
 
     if 'imagenet_norm' in args and args.imagenet_norm:
@@ -151,16 +163,27 @@ def build_test_trial(args):
 
     callbacks = [
         CSVLogger(str(args.output) + '/log.csv'),
-        imaging.FromState(tb.SKETCHES, transform=inv).on_test().cache(
+        imaging.FromState(SKETCHES, transform=inv).on_test().cache(
             args.num_reconstructions).make_grid().with_handler(
             img_to_file(str(args.output) + '/test_sketch_samples.png')),
-        imaging.FromState(tb.Y_TRUE, transform=sinv).on_test().cache(args.num_reconstructions).make_grid().with_handler(
-            img_to_file(str(args.output) + '/test_samples.png'))
+        imaging.FromState(SENDER_IMAGES, transform=sinv).on_test().cache(
+            args.num_reconstructions).make_grid().with_handler(
+            img_to_file(str(args.output) + '/test_samples.png')),
+        imaging.FromState(RECEIVER_IMAGES, transform=sinv).on_test().cache(
+            args.num_reconstructions).make_grid().with_handler(
+            img_to_file(str(args.output) + '/test_samples_targets_gameorder.png')),
+        imaging.FromState(RECEIVER_IMAGES_MATCHED, transform=sinv).on_test().cache(
+            args.num_reconstructions).make_grid().with_handler(
+            img_to_file(str(args.output) + '/test_samples_targets_matchedorder.png')),
+        GameLogger(args, transform=sinv, sketch_transform=inv)
     ]
 
-    mets = ['loss', 'commrate']
-    trial = tb.Trial(model, metrics=mets, callbacks=callbacks)
-    trial.with_loader(autoenc_loader)
+    if args.reconstruct_loss:
+        callbacks.append(reconstruct_loss)
+
+    mets = ['loss', build_commrate_metric(args)]
+    trial = tb.Trial(model, criterion=loss, metrics=mets, callbacks=callbacks)
+    trial.with_loader(build_game_loader(args))
 
     return trial, model
 
@@ -179,8 +202,37 @@ def build_model(args):
     sketching_agents = SketchingGame(senc, renc, dec, rec, args.num_targets, imagenet_norm, args.invert)
 
     if 'weights' in args:
-        state = torch.load(args.weights, map_location=args.device)
-        sketching_agents.load_state_dict(state[tb.MODEL])
+        if args.swapAgents and args.weights_pair2 is not None:
+                   
+            print("Loading weights for the second pair of agents to swap")
+            
+            state1 =  torch.load(args.weights, map_location=args.device)
+            sketching_agents.load_state_dict(state1[tb.MODEL])
+            pair1_sender_enc=sketching_agents.sender_encoder
+            pair1_dec = sketching_agents.decoder
+            
+            
+            senc2 = get_model(args.encoder).create(args)
+            if args.separate_encoders:
+                renc2 = get_model(args.encoder).create(args)
+            else:
+                renc2 = senc2
+
+            dec2 = get_model(args.decoder).create(args)
+            rec2 = get_model(args.receiver).create(args)
+
+            sketching_agents2 = SketchingGame(senc2, renc2, dec2, rec2, args.num_targets, imagenet_norm, args.invert)
+            
+            state2 =  torch.load(args.weights_pair2, map_location=args.device)
+            sketching_agents2.load_state_dict(state2[tb.MODEL])
+            pair2_rec_enc=sketching_agents2.receiver_encoder
+            pair2_rec=sketching_agents2.receiver
+
+            sketching_agents = SketchingGame(pair1_sender_enc, pair2_rec_enc, pair1_dec, pair2_rec, args.num_targets, imagenet_norm, args.invert)
+        else:
+            print("Weight loading for one pair of agents only")
+            state = torch.load(args.weights, map_location=args.device)
+            sketching_agents.load_state_dict(state[tb.MODEL])
 
     # TODO: loading weights for encoders
 
@@ -203,6 +255,8 @@ def add_shared_args(parser):
     parser.add_argument("--dataset", help="dataset", required=True, choices=dataset_choices())
     parser.add_argument("--num-reconstructions", type=int, required=False, help="number of reconstructions to save",
                         default=100)
+    parser.add_argument("--random-transform-sender", help='apply random transformation to sender images',
+                        required=False, action='store_true')
     parser.add_argument("--sender-images-per-iter", help="number of sender images in each batch of processing",
                         type=int, default=None)
     parser.add_argument("--num-targets", help="number of target images in each game (only for OO games); defaults "
@@ -221,29 +275,41 @@ def add_shared_args(parser):
     # oo games
     parser.add_argument("--sort-of-perceptual-loss", action='store_true', required=False,
                         help="should a pseudo perceptual loss between the senders input and sketch be incorporated.")
+    parser.add_argument("--like-a-dog-loss", action='store_true', required=False,
+                        help="should a pseudo perceptual loss between an image of a dog and sketch be incorporated.")
+    parser.add_argument("--like-a-dog-image", required=False, type=pathlib.Path,
+                        help="path to an image of a dog or similar.")
     parser.add_argument("--learn-sop-weights", action='store_true', required=False,
                         help="should the sort-of-perceptual loss weights be learned?")
     parser.add_argument("--sop-weights", type=float, nargs='+', required=False, default=[1, 1, 1, 1, 1],
                         help="sort-of-perceptual loss weights")
+    parser.add_argument("--sop-coef", type=float, required=False, help="weight the perceptual loss - lambda", default=1)
     parser.add_argument("--reconstruct-loss", help="Add a reconstruction loss between input image and sketch",
                         action='store_true',
                         required=False)
+    parser.add_argument("--loss", choices=loss_choices(), required=True, help="loss function")
+    parser.add_argument("--CLIP-loss", action='store_true', required=False,
+                        help="incorporate the pseudo perceptual loss (from CLIPDraw) between the senders input and sketch according.")
 
 
 def add_subparsers(parser, add_help=True):
     subparsers = parser.add_subparsers(dest='mode')
     train_parser = subparsers.add_parser("train", add_help=add_help)
     add_shared_args(train_parser)
-    train_parser.add_argument("--loss", choices=loss_choices(), required=False, default='HingeLoss', help="loss function")
     train_parser.add_argument("--epochs", type=int, required=False, help="number of epochs", default=10)
     train_parser.add_argument("--learning-rate", type=str, required=False, help="learning rate spec", default=0.001)
     train_parser.add_argument("--weight-decay", type=float, required=False, help="weight decay", default=0)
     train_parser.add_argument("--snapshot-interval", type=int, required=False,
                               help="interval between saving model snapshots", default=10)
     train_parser.set_defaults(perform=train)
+
     eval_parser = subparsers.add_parser("eval", add_help=add_help)
     add_shared_args(eval_parser)
     eval_parser.add_argument("--weights", help="model weights", type=pathlib.Path, required=True)
+    eval_parser.add_argument("--swapAgents",  action='store_true', required=False,
+                        help="Pair the sender of the firs pair at location --weights with the receiver of the second pair at location --weights-pair2")
+    eval_parser.add_argument("--weights-pair2", help="second model weights", type=pathlib.Path, required=False)
+    
     eval_parser.set_defaults(perform=evaluate)
 
 
@@ -287,7 +353,14 @@ def main():
     args = parse_args()
 
     # this is where we configure how images are paired-up
-    args.additional_transforms = pair_images
+    if args.random_transform_sender:
+        # sender undergoes transform
+        print(f"Sender images will be a randomly transformed; targets will not.")
+        args.additional_transforms = pair_images_tranform_sender
+    else:
+        # straight pair - images unaltered
+        print(f"Sender (and target) images are not transformed.")
+        args.additional_transforms = pair_images
 
     args.perform(args)
 

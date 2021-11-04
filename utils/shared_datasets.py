@@ -5,12 +5,15 @@ from torchvision.datasets import CIFAR10, STL10, CelebA, VisionDataset
 
 # noinspection PyUnresolvedReferences
 from dsketch.experiments.shared.args_datasets import *
-# from dsketch.experiments.shared.args_datasets import compose
 from dsketch.experiments.shared.args_datasets import MNISTDataset as _MNISTDataset
 from dsketch.experiments.shared.args_datasets import _Dataset, _split
 from dsketch.experiments.shared.utils import list_class_names
+from utils import *
 from utils.caltech_datasets import Caltech101
 from utils.tinyimagenet import TinyImageNet
+import os
+from torchvision import datasets
+from skimage import io, transform
 
 IMAGENET_NORM = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 IMAGENET_NORM_INV = transforms.Compose([
@@ -183,14 +186,21 @@ class STL10Dataset(_Dataset):
     @staticmethod
     def _add_args(p):
         CIFAR10Dataset._add_args(p)
+        p.add_argument("--image-size", help="size of resampled images", type=int, default=96, required=False)
         p.add_argument("--unlabelled-train", help="load the unlabelled trainset", action='store_true', required=False)
 
     @classmethod
     def get_transforms(cls, args, train=False):
+        base = [
+            transforms.Resize(args.image_size),
+            transforms.CenterCrop(args.image_size),
+            transforms.ToTensor()
+        ]
+
         if args.imagenet_norm:
-            return compose(transforms.Compose([transforms.ToTensor(), IMAGENET_NORM]), args)
-        else:
-            return compose(transforms.ToTensor(), args)
+            base.append(IMAGENET_NORM)
+
+        return compose(transforms.Compose(base), args)
 
     @classmethod
     def get_channels(cls, args):
@@ -198,7 +208,7 @@ class STL10Dataset(_Dataset):
 
     @classmethod
     def get_size(cls, args):
-        return 96
+        return args.image_size
 
     @classmethod
     def create(cls, args):

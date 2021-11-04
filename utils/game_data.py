@@ -254,3 +254,13 @@ def build_dataloaders(args, verbose=True):
 def pair_images(x):
     return x, x
 
+
+RANDOM_TF = transforms.Compose([
+    transforms.RandomAffine(10.0, translate=(0.1, 0.1), scale=(0.95, 1.01), shear=1, fillcolor=None),
+    transforms.Lambda(lambda x: x * (1 + (torch.rand_like(x) - 0.5) / 10))
+])
+
+
+def pair_images_tranform_sender(x, tf=RANDOM_TF):
+    return tf(x), x
+

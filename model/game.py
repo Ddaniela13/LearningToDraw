@@ -36,11 +36,12 @@ class SketchingGame(nn.Module):
         if self.invert:
             sketches = 1 - sketches
 
+        if self.receiver_encoder.channels == 3:
+            if sketches.dim() == 3 or sketches.shape[1] == 1:
+                sketches = torch.cat(3 * [sketches], dim=1)  # to then pass through the vgg16 FE
+
         if state is not None:
             state[SKETCHES] = sketches
-
-        if self.receiver_encoder.channels == 3:
-            sketches = torch.cat(3 * [sketches], dim=1)  # to then pass through the vgg16 FE
 
         if self.imagenet_norm:
             sketches = IMAGENET_NORM(sketches)  # normalise like imagenet if required
