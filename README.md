@@ -43,6 +43,8 @@ The options `--sigma2` and `--nlines` control the thickness and number of lines 
 
 The training scripts compute a running communication rate in addition to loss and this is displayed as training progresses. After each epoch a validation pass is performed and images of the sketches and sender inputs and receiver targets are saved to the output directory along with a model snapshot. The output directory also contains a log file with the training and validation statistics per epoch.
 
+Example commands to run the experiments in the paper are given in [commands.md](commands.md)
+
 Further details on commandline arguments are given below.
 
 ## Game setups
@@ -133,16 +135,16 @@ Datasets will be downloaded to the dataset root directory (default `./data`) as 
     --dataset {CIFAR10,CelebA,MNIST,STL10,TinyImageNet,Caltech101}  
     [--dataset-root]
 
-
-
 ## Citation
 
 If you find this repository useful for your research, please cite our paper using the following.
 
-  @article{mihai2021learning,
-  title={Learning to Draw: Emergent Communication through Sketching},
-  author={Mihai, Daniela and Hare, Jonathon},
-  journal={arXiv preprint arXiv:2106.02067},
-  year={2021}
-  }
+      @@inproceedings{
+      mihai2021learning,
+      title={Learning to Draw: Emergent Communication through Sketching},
+      author={Daniela Mihai and Jonathon Hare},
+      booktitle={Thirty-Fifth Conference on Neural Information Processing Systems},
+      year={2021},
+      url={https://openreview.net/forum?id=YIyYkoJX2eA}
+      }
 
