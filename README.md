@@ -137,14 +137,12 @@ Datasets will be downloaded to the dataset root directory (default `./data`) as 
 
 ## Citation
 
-If you find this repository useful for your research, please use the following.
+If you find this repository useful for your research, please cite our paper using the following.
 
-    @misc{mihai2021learning,
-      title={Learning to Draw: Emergent Communication through Sketching}, 
-      author={Daniela Mihai and Jonathon Hare},
-      year={2021},
-      eprint={2106.02067},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
-    }
+  @article{mihai2021learning,
+  title={Learning to Draw: Emergent Communication through Sketching},
+  author={Mihai, Daniela and Hare, Jonathon},
+  journal={arXiv preprint arXiv:2106.02067},
+  year={2021}
+  }
 
